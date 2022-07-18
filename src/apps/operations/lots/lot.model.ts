@@ -1,0 +1,31 @@
+import { StateLots } from "src/helpers/enums/state.enum";
+import { Double } from "typeorm";
+export interface LotModel {
+    id: string;
+    superviseur_id: string;
+    campagne_id: string;
+    site_id: string;
+    entrepot_id: string;
+    exportateur_id: string;
+    speculation_id: string;
+    chargement_id: string;
+    zonage_id: string;
+    numero_ticket_pese: number;
+    code_dechargement: string;
+    numero_lot: number;
+    sac_en_stock: number;
+    premiere_pesee: number;
+    deuxieme_pesee: number;
+    reconditionne: number;
+    tare_emballage_refraction: number;
+    poids_net: number;
+    sacs_decharge: number;
+    date_dechargement: Date;
+    statut: StateLots;
+    validity: boolean;
+    created: Date;
+    created_by: string;
+    updated: Date;
+    updated_by: string;
+    file: any;
+}

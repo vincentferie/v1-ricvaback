@@ -1,0 +1,108 @@
+
+import { Body, Controller, Get, Param, Post, Delete, UsePipes, Patch, ParseUUIDPipe, Query, ValidationPipe, UseGuards } from '@nestjs/common';
+import { SoftDelete } from 'src/helpers/enums/softdelete.enum';
+import { ParseJsonPipe } from 'src/helpers/pipes/parse-json.pipe';
+import { SoftDeleteValidationPipe } from 'src/helpers/pipes/softdelete-validation.pipe';
+import { EntrepotDto } from './entrepot.dto';
+import { EntrepotsService } from './entrepots.service';
+import { ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtInfoGetter } from 'src/helpers/decorator/jwt-info-getter.decorator';
+import { Roles } from 'src/helpers/decorator/role.decorator';
+import { Role } from 'src/helpers/enums/role.enum';
+
+@ApiTags('entrepots')
+@Controller('entrepots')
+@UseGuards(AuthGuard('jwt'))
+@Roles(Role.Manager, Role.Administrator)
+export class EntrepotsController {
+    constructor(private readonly entrepotsService: EntrepotsService) { }
+
+    @Post()
+    @UsePipes(ValidationPipe)
+    async save(
+        @JwtInfoGetter() payload, 
+        @Body() entrepotDto: EntrepotDto
+    ) {
+        entrepotDto.created = new Date(Date.now());
+        entrepotDto.created_by = `${payload.user.nom} ${payload.user.prenoms}`;
+        entrepotDto.mode = SoftDelete.active;
+        const result = await this.entrepotsService.save(payload, entrepotDto);
+        return result;
+    }
+
+    @Patch('/edit/:primaryKey')
+    async update(
+        @JwtInfoGetter() payload, 
+        @Body(ValidationPipe) entrepotDto: EntrepotDto,
+        @Param('primaryKey', ParseUUIDPipe) primaryKey) {
+          entrepotDto.updated = new Date(Date.now());
+          entrepotDto.updated_by = `${payload.user.nom} ${payload.user.prenoms}`;
+        const result = await this.entrepotsService.update(payload, entrepotDto, primaryKey);
+        return result;
+    }
+
+    @Patch('/edit/:primaryKey/mode')
+    async updateMode(
+        @JwtInfoGetter() payload, 
+        @Body('mode', SoftDeleteValidationPipe) mode: SoftDelete,
+        @Param('primaryKey', ParseUUIDPipe) primaryKey) {
+
+        const result = await this.entrepotsService.updateMode(payload, primaryKey, mode);
+        return result;
+    }
+
+    @Delete(':primaryKey')
+    async delete(@JwtInfoGetter() payload, @Param('primaryKey', ParseUUIDPipe) primaryKey) {
+        const result = await this.entrepotsService.delete(payload, primaryKey);
+        return result;
+    }
+
+    @Delete('/softdelete/:primaryKey')
+    async softDelete(@JwtInfoGetter() payload, @Param('primaryKey', ParseUUIDPipe) primaryKey) {
+        const result = await this.entrepotsService.softDelete(payload, primaryKey);
+        return result;
+    }
+
+    @Get()
+    @Roles(Role.Manager, Role.Operator, Role.Accounting, Role.Financial)
+    async find(@JwtInfoGetter() payload, ) {
+        const result = await this.entrepotsService.find(payload, {});
+        return result;
+    }
+
+    @Get('paginate')
+    @Roles(Role.Manager, Role.Operator, Role.Accounting, Role.Financial)
+    async findPaginate(@JwtInfoGetter() payload, @Query() findOption) {
+        const result = await this.entrepotsService.findPaginate(payload, findOption);
+        return result;
+    }
+
+    @Get('paginate/query')
+    @Roles(Role.Manager, Role.Operator, Role.Accounting, Role.Financial)
+    async findPaginateResearch(@JwtInfoGetter() payload, @Query() findOption) {
+        const result = await this.entrepotsService.findPaginateResearch(payload, findOption);
+        return result;
+    }
+
+    @Get('try')
+    @Roles(Role.Manager, Role.Operator, Role.Accounting, Role.Financial)
+    async findMode(@JwtInfoGetter() payload, @Query('mode', SoftDeleteValidationPipe) mode: SoftDelete) {
+        const result = await this.entrepotsService.findMode(payload, mode);
+        return result;
+    }
+
+    @Get('query/:option')
+    @Roles(Role.Manager, Role.Operator, Role.Accounting, Role.Financial)
+    async findQuery(@JwtInfoGetter() payload, @Param('option', ParseJsonPipe) findOption) {
+        const result = await this.entrepotsService.find(payload, findOption);
+        return result;
+    }
+
+    @Get(':primaryKey')
+    @Roles(Role.Manager, Role.Operator, Role.Accounting, Role.Financial)
+    async findById(@JwtInfoGetter() payload, @Param('primaryKey', ParseUUIDPipe) primaryKey) {
+        const result = await this.entrepotsService.findById(payload, primaryKey);
+        return result;
+    }
+}
